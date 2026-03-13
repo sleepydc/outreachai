@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
+
+:root {
+  --bg0: #0a0a0f;
+  --bg1: #111118;
+  --bg2: #16161f;
+  --bg3: #1c1c28;
+  --bgi: #1a1a25;
+  --bd: #252533;
+  --t1: #f0eff4;
+  --t2: #8a8a9a;
+  --t3: #55556a;
+  --ac: #6c5ce7;
+  --acl: #8b7cf0;
+  --acg: rgba(108, 92, 231, 0.15);
+  --grn: #00d68f;
+  --org: #f0a030;
+  --blu: #48b0f0;
+  --pnk: #e84393;
+  --red: #ff6b6b;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg0);
+  color: var(--t1);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bd);
+  border-radius: 3px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
