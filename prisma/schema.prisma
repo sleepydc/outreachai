@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -32,12 +33,13 @@ model Program {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   name      String
-  platforms Json
-  filters   Json
-  status    String   @default("active")
+  platforms Json     // ["tiktok", "instagram", ...]
+  filters   Json     // Platform-specific filter config
+  status    String   @default("active") // active, archived
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Denormalized counts for fast display
   prospectsCount  Int @default(0) @map("prospects_count")
   contactedCount  Int @default(0) @map("contacted_count")
   interestedCount Int @default(0) @map("interested_count")
