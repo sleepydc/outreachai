@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  passwordHash         String    @map("password_hash")
+  name                 String?
+  plan                 String    @default("pro")
+  onboardingCompleted  Boolean   @default(false) @map("onboarding_completed")
+  notificationEmail    Boolean   @default(true) @map("notification_email")
+  notificationBrowser  Boolean   @default(false) @map("notification_browser")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  programs        Program[]
+  coworkApiKeys   CoworkApiKey[]
+  usageTracking   UsageTracking[]
+  notifications   Notification[]
+  syncCheckpoints SyncCheckpoint[]
+
+  @@map("users")
+}
+
+model Program {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  platforms Json
+  filters   Json
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  prospectsCount  Int @default(0) @map("prospects_count")
+  contactedCount  Int @default(0) @map("contacted_count")
+  interestedCount Int @default(0) @map("interested_count")
+
+  user      User       @relation(fields: [userId], references: [id])
+  prospects Prospect[]
+  scanJobs  ScanJob[]
+  outreach  OutreachMessage[]
+
+  @@index([userId])
+  @@map("programs")
+}
+
+model Prospect {
+  id             String   @id @default(uuid())
+  programId      String   @map("program_id")
+  platform       String
+  sourcePlatform String?  @map("source_platform")
+  name           String
+  handle         String
+  followersRaw   Int?     @map("followers_raw")
+  engagementRate Float?   @map("engagement_rate")
+  niche          String?
+  score          Int?
+  verified       Boolean  @default(false)
+  status         String   @default("new")
+  recentContent  Json?    @map("recent_content")
+  linkedHandles  Json?    @map("linked_handles")
+  linkedProspectId String? @map("linked_prospect_id")
+  rawScrapedData Json?    @map("raw_scraped_data")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  program  Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  outreach OutreachMessage[]
+
+  @@unique([programId, handle, platform])
+  @@index([programId, platform])
+  @@index([programId, status])
+  @@map("prospects")
+}
+
+model OutreachMessage {
+  id             String   @id @default(uuid())
+  prospectId     String   @map("prospect_id")
+  programId      String   @map("program_id")
+  platform       String
+  handle         String
+  mode           String?
+  messageHistory Json     @default("[]") @map("message_history")
+  latestMessage  String?  @map("latest_message")
+  nudgeCount     Int      @default(0) @map("nudge_count")
+  replyStatus    String   @default("pending") @map("reply_status")
+  dealStage      String?  @map("deal_stage")
+  notes          String?
+  respondedAt    DateTime? @map("responded_at")
+  sentAt         DateTime? @map("sent_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  program  Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@index([prospectId])
+  @@index([programId, replyStatus])
+  @@index([handle, platform])
+  @@index([handle, platform, replyStatus])
+  @@map("outreach_messages")
+}
+
+model ScanJob {
+  id                 String    @id @default(uuid())
+  programId          String    @map("program_id")
+  status             String    @default("pending")
+  platformsTotal     Int       @default(0) @map("platforms_total")
+  platformsCompleted Int       @default(0) @map("platforms_completed")
+  prospectsFound     Int       @default(0) @map("prospects_found")
+  errorLog           String?   @map("error_log")
+  lastHeartbeatAt    DateTime? @map("last_heartbeat_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@index([programId, status])
+  @@map("scan_jobs")
+}
+
+model CoworkApiKey {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  keyHash    String   @map("key_hash")
+  keyPrefix  String   @map("key_prefix")
+  lastUsedAt DateTime? @map("last_used_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("cowork_api_keys")
+}
+
+model SyncCheckpoint {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  platform        String
+  lastDmCheckedAt DateTime @default(now()) @map("last_dm_checked_at")
+  pendingHandles  Json     @default("[]") @map("pending_handles")
+  pendingCount    Int      @default(0) @map("pending_count")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+  @@map("sync_checkpoints")
+}
+
+model UsageTracking {
+  id             String @id @default(uuid())
+  userId         String @map("user_id")
+  month          String
+  aiGenerations  Int    @default(0) @map("ai_generations")
+  scansRun       Int    @default(0) @map("scans_run")
+  messagesSent   Int    @default(0) @map("messages_sent")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+  @@map("usage_tracking")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  body      String?
+  read      Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@map("notifications")
+}
